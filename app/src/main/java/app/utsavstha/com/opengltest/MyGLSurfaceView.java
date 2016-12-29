@@ -1,8 +1,13 @@
 package app.utsavstha.com.opengltest;
 
+import android.app.Activity;
 import android.content.Context;
+import android.graphics.Camera;
 import android.opengl.GLSurfaceView;
+import android.opengl.GLU;
+import android.opengl.Matrix;
 import android.support.v4.view.MotionEventCompat;
+import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 
 /**
@@ -11,24 +16,25 @@ import android.view.MotionEvent;
 public class MyGLSurfaceView extends GLSurfaceView  {
 
     private final float TOUCH_SCALE_FACTOR = 180.0f / 320;
-    private float mPreviousX;
-    private float mPreviousY;
+    private float mPreviousX = 0;
+    private float mPreviousY = 0;
     private float mDensity;
 
     private final MyGLRenderer mRenderer;
-
+    Context context;
     public MyGLSurfaceView(Context context){
         super(context);
-
+        this.context = context;
         // Create an OpenGL ES 2.0 context
         setEGLContextClientVersion(2);
 
-        mRenderer = new MyGLRenderer();
+        mRenderer = new MyGLRenderer(getContext());
 
         // Render the view only when there is a change in the drawing data.
         // To allow the triangle to rotate automatically, this line is commented out:
 
         // Set the Renderer for drawing on the GLSurfaceView
+
         setRenderer(mRenderer);
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 
@@ -46,29 +52,37 @@ public class MyGLSurfaceView extends GLSurfaceView  {
 
 
         switch (e.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+
+                x = e.getX();
+                mPreviousX = x;
+
+                y = e.getY();
+                mPreviousY = y;
+                mRenderer.redrawLine(mRenderer.GetWorldCoords(mPreviousX, mPreviousY), 0, mRenderer.GetWorldCoords(e.getX(), e.getY()), 0);
+                //requestRender();
+                break;
             case MotionEvent.ACTION_MOVE:
-
-                float dx = x - mPreviousX;
-                float dy = y - mPreviousY;
-
-                // reverse direction of rotation above the mid-line
-                if (y > getHeight() / 2) {
-                    dx = dx * -1 ;
+                if(e.getX() != mPreviousX){
+                    //mRenderer.redrawLine(mRenderer.GetWorldCoords(mPreviousX, mPreviousY), 0, mRenderer.GetWorldCoords(e.getX(), e.getY()), 0);
+                    mPreviousX = e.getX();
+                    mPreviousY = e.getY();
+                    requestRender();
                 }
+                break;
+            case MotionEvent.ACTION_UP:
+                mPreviousX = 0;
+                mPreviousY = 0;
+                break;
 
-                // reverse direction of rotation to left of the mid-line
-                if (x < getWidth() / 2) {
-                    dy = dy * -1 ;
-                }
 
-                mRenderer.setAngle(
-                        mRenderer.getAngle() +
-                                ((dx + dy) * TOUCH_SCALE_FACTOR));
-                requestRender();
+
         }
 
         mPreviousX = x;
         mPreviousY = y;
         return true;
     }
+
 }
+
